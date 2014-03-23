@@ -1,14 +1,14 @@
 DBSync
 =======================
 
-DBSync is a simple command line Windows tool to sync to mySQL databases and export a SQL 'differences' file which when executed back onto the target database will bring them both back into sync.
+DBSync is a simple command line Windows tool to sync two mySQL databases and export a SQL 'differences' file which when executed back onto the target database will bring them both back into sync.
 
 Requires the XMySQLLib library available at https://github.com/coderangerdan/XMySQLLib
 
 
 ## Usage:
 
-    MySQL DBSync (c) Copyright 2010 Coderanger.com. All rights reserved.
+    MySQL DBSync (c) Copyright CodeRanger.com. All rights reserved.
     DBSync takes two mySQL databases and compares the data in each table so as to
     create a SQL 'differences' file that can be run on the target db to bring it
     into sync with the source database. This can use a lot of memory so use 64bit.
@@ -25,7 +25,7 @@ Requires the XMySQLLib library available at https://github.com/coderangerdan/XMy
 
     DBSync - a simple mysql database sync tool
 
-    Copyright (c) 2010 Dan Petitt (CoderRanger.com)
+    Copyright (c) Dan Petitt (CoderRanger.com)
 
     Redistribution and use in source and binary forms, with or without modification,
     are permitted provided that the following conditions are met:

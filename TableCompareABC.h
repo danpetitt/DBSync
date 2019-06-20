@@ -20,7 +20,7 @@ public:
 
 	void SetSourceDatabase( LPCTSTR pcszHost, LPCTSTR pcszUser, LPCTSTR pcszPassword, LPCTSTR pcszDatabase, UINT uPort = 3306 );
 	void SetTargetDatabase( LPCTSTR pcszHost, LPCTSTR pcszUser, LPCTSTR pcszPassword, LPCTSTR pcszDatabase, UINT uPort = 3306 );
-	void Start( LPCTSTR pcszExportFilePath, bool bDisplayProgress );
+	void Start( LPCTSTR pcszExportFilePath, bool bDisplayProgress, bool bUseBulkInserts = true );
 
 
 	struct Field
@@ -45,11 +45,14 @@ public:
 protected:
 	virtual void OnProcessTable( const XMySQL::CConnection::Table &tbl ) = 0;
 
+	bool FieldIsQuoted( UINT uFieldType );	// Returns true if field values should be surrounded by quotes and escaped where necessary (i.e. strings, dates etc)
+
 	XMySQL::CConnection m_mySource;
 	XMySQL::CConnection m_myTarget;
 
 	FILE *m_pFile;
 	bool m_bDisplayProgress;
+	bool m_bUseBulkInserts;
 
 	UINT m_uTotalIdentical;
 	UINT m_uTotalDifferent;

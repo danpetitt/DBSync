@@ -30,6 +30,7 @@ protected:
 
 private:
 	std::string BuildDifferentFieldValues( const CTableCompareABC::Record &rec );
+	std::string BuildBulkInsertFieldValues( const CTableCompareABC::Record &rec );
 	std::string BuildWhereClauseForKeys( const CTableCompareABC::Record &rec );
 	std::string BuildWhereClauseForKeys( const XMySQL::CResultSet &rs );
 

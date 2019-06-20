@@ -1,3 +1,4 @@
+
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DBSync", "DBSync.vcproj", "{F9D69FDF-2F16-45E1-A9C7-AC62901943FE}"
@@ -5,17 +6,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DBSync", "DBSync.vcproj", "
 		{945EE54F-7EDD-407D-AE7F-E1F0D3055953} = {945EE54F-7EDD-407D-AE7F-E1F0D3055953}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XMySQLLib", "..\..\Components\XMySQLLib\XMySQLLib.vcproj", "{945EE54F-7EDD-407D-AE7F-E1F0D3055953}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XMySQLLib", "..\XMySQLLib\XMySQLLib.vcproj", "{945EE54F-7EDD-407D-AE7F-E1F0D3055953}"
 EndProject
 Global
-	GlobalSection(VaultVsipSolution-v2) = preSolution
-		VaultHost = http://vault.gipsymedia.com:8090//VaultService
-		VaultRepositoryID = 2
-		VaultRepositoryGUID = 56a6f3be-778a-490b-b23c-b2e5a33b45a2
-		ProjectCount = 2
-		ProjectRelativeDiskPath1 = ..\..\Components\XMySQLLib\XMySQLLib.vcproj
-		ProjectRelativeDiskPath2 = DBSync.vcproj
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug UNICODE|Win32 = Debug UNICODE|Win32
 		Debug UNICODE|x64 = Debug UNICODE|x64

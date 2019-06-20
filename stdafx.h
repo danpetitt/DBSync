@@ -16,7 +16,7 @@
 #include <sstream>
 
 
-#include <XMySQLLib/XMySQLLib.h>
+#include "../XMySQLLib/XMySQLLib.h"
 
 
 #ifdef _UNICODE

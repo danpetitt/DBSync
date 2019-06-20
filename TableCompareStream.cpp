@@ -38,7 +38,7 @@ void CTableCompareStream::OnProcessTable( const XMySQL::CConnection::Table &tbl 
 		{
 			if( strKeyFields.length() )
 			{
-				strKeyFields += _T(", '-', ");
+				strKeyFields += _T(", ");
 			}
 			strKeyFields += _T("CAST( ") + fieldInfo.strName + _T(" AS CHAR )");
 		}
@@ -51,7 +51,7 @@ void CTableCompareStream::OnProcessTable( const XMySQL::CConnection::Table &tbl 
 	}
 
 	std::stringstream dataRequestStream;
-	dataRequestStream << _T("SELECT MD5( CONCAT( ") << strKeyFields.c_str() << _T(" ) ) AS KeyHash, ") << strAllFields;
+	dataRequestStream << _T("SELECT MD5( CONCAT_WS( '-', ") << strKeyFields.c_str() << _T(" ) ) AS KeyHash, ") << strAllFields;
 	dataRequestStream << _T(" FROM `") << tbl.strName << _T("`");
 	dataRequestStream << _T(" ORDER BY KeyHash");
 
@@ -191,6 +191,11 @@ void CTableCompareStream::OnProcessTable( const XMySQL::CConnection::Table &tbl 
 
 	//
 	// Any records in source that werent in target need inserting into target
+	const std::string bulkInsertStartStatement( _T("INSERT INTO `") + tbl.strName + _T("`(") + strAllFields + _T(") VALUES ") );
+	static const std::string endStatement( _T(";\n") );
+
+	std::string bulkInsertValuesStatement;
+
 	std::map< std::string, CTableCompareABC::Record >::iterator itSource = mapSourceRecords.begin();
 	for( itSource = mapSourceRecords.begin(); itSource != mapSourceRecords.end(); itSource++ )
 	{
@@ -199,13 +204,52 @@ void CTableCompareStream::OnProcessTable( const XMySQL::CConnection::Table &tbl 
 		std::map< std::string, bool >::iterator itProcessed = mapRecordsProcessed.find( rec.strHash );
 		if( itProcessed == mapRecordsProcessed.end() )
 		{
-			std::stringstream streamStatement;
-			streamStatement << _T("INSERT INTO `") << tbl.strName << _T("`");
-			streamStatement << _T(" SET ") << BuildDifferentFieldValues( rec ) << _T(";\n");
+			if( m_bUseBulkInserts )
+			{
+				// 	INSERT INTO programmekeyword(nProgrammeID, nKeywordID) VALUES
+				// 		(740044, 37),
+				// 		(740044, 42),
+				// 		(740044, 560);
+				if( m_uRecordsInserted == 0 )
+				{
+					m_arrInsert.push_back( bulkInsertStartStatement );
+				}
 
-			m_arrInsert.push_back( streamStatement.str() );
+				{
+					if( bulkInsertValuesStatement.size() )
+						bulkInsertValuesStatement += _T(",");
+
+					bulkInsertValuesStatement += _T("\n(") + BuildBulkInsertFieldValues( rec ) + _T(")");
+				}
+
+				if( m_uRecordsInserted && m_uRecordsInserted % 200 == 0 )
+				{
+					m_arrInsert.push_back( bulkInsertValuesStatement );
+					m_arrInsert.push_back( endStatement );
+
+					m_arrInsert.push_back( bulkInsertStartStatement );
+
+					bulkInsertValuesStatement.clear();
+				}
+
+			}
+			else
+			{
+				std::stringstream streamStatement;
+				streamStatement << _T("INSERT INTO `") << tbl.strName << _T("`");
+				streamStatement << _T(" SET ") << BuildDifferentFieldValues( rec ) << _T(";\n");
+
+				m_arrInsert.push_back( streamStatement.str() );
+			}
 			m_uRecordsInserted++;
 		}
+	}
+
+	if( m_bUseBulkInserts && bulkInsertValuesStatement.size() )
+	{
+		// Some left over
+		m_arrInsert.push_back( bulkInsertValuesStatement );
+		m_arrInsert.push_back( endStatement );
 	}
 }
 
@@ -253,6 +297,47 @@ std::string CTableCompareStream::BuildDifferentFieldValues( const CTableCompareA
 	return streamFields.str();
 }
 
+
+std::string CTableCompareStream::BuildBulkInsertFieldValues( const CTableCompareABC::Record &rec )
+{
+	// Build a stream of all our name=value column value pairs
+	std::stringstream streamFields;
+	for( UINT u = 1; u < rec.arrFields.size(); u++ )	// first field is always KeyHash field so skip past it
+	{
+		const CTableCompareABC::Field &fld = rec.arrFields.at( u );
+		if( !fld.bIsDifferent )
+		{
+			continue;
+		}
+
+		if( streamFields.str().size() )
+		{
+			streamFields << _T(",");
+		}
+
+		if( fld.bIsNull )
+		{
+			streamFields << _T("NULL");
+		}
+		else
+		{
+			streamFields << _T("'");
+			if( fld.uType == MYSQL_TYPE_STRING || fld.uType == MYSQL_TYPE_VAR_STRING || fld.uType == MYSQL_TYPE_VARCHAR || fld.uType == MYSQL_TYPE_BLOB )
+			{
+				std::string sValue( fld.strValue );
+				m_mySource.EscapeString( sValue );
+				streamFields << sValue;
+			}
+			else
+			{
+				streamFields << fld.strValue;
+			}
+			streamFields << _T("'");
+		}
+	}
+
+	return streamFields.str();
+}
 
 std::string CTableCompareStream::BuildWhereClauseForKeys( const CTableCompareABC::Record &rec )
 {

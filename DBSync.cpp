@@ -11,6 +11,7 @@ Purpose:	Generates a SQL database of SQL Statements describing the
 ----------------------------------------------------------------------*/
 #include "stdafx.h"
 #include "TableCompareStream.h"
+#include "TableCompareQuery.h"
 
 
 int _tmain(int argc, _TCHAR* argv[])
@@ -59,10 +60,26 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	try
 	{
-		CTableCompareStream tblStream;
-		tblStream.SetSourceDatabase( pcszSourceHost, pcszSourceUser, pcszSourcePassword, pcszSourceDB, uSourcePort );
-		tblStream.SetTargetDatabase( pcszTargetHost, pcszTargetUser, pcszTargetPassword, pcszTargetDB, uTargetPort );
-		tblStream.Start( pcszExportFilePath, bShowProgress );
+		if( !_tcsicmp( pcszSourceHost, pcszTargetHost ) && uSourcePort == uTargetPort )
+		{
+			_tprintf( _T("Source and target on same server, using the Fast Query Analysis Algorithm\n\n") );
+
+			// Same server so use the faster, more efficient query based method
+			CTableCompareQuery tblQuery;
+			tblQuery.SetSourceDatabase( pcszSourceHost, pcszSourceUser, pcszSourcePassword, pcszSourceDB, uSourcePort );
+			tblQuery.SetTargetDatabase( pcszTargetHost, pcszTargetUser, pcszTargetPassword, pcszTargetDB, uTargetPort );
+			tblQuery.Start( pcszExportFilePath, bShowProgress, true );
+		}
+		else
+		{
+			_tprintf( _T("Source and target on different servers, using the Memory Based Analysis Algorithm\n\n") );
+
+			// Different servers so use the slower, memory hugging load everything into ram method
+			CTableCompareStream tblStream;
+			tblStream.SetSourceDatabase( pcszSourceHost, pcszSourceUser, pcszSourcePassword, pcszSourceDB, uSourcePort );
+			tblStream.SetTargetDatabase( pcszTargetHost, pcszTargetUser, pcszTargetPassword, pcszTargetDB, uTargetPort );
+			tblStream.Start( pcszExportFilePath, bShowProgress, true );
+		}
 	}
 	catch( XMySQL::CException *e )
 	{

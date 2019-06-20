@@ -22,6 +22,7 @@ CTableCompareABC::CTableCompareABC(void)
 
 	, m_pFile( NULL )
 	, m_bDisplayProgress( true )
+	, m_bUseBulkInserts( true )
 
 	, m_uTotalIdentical( 0 )
 	, m_uTotalDifferent( 0 )
@@ -56,9 +57,10 @@ void CTableCompareABC::SetTargetDatabase( LPCTSTR pcszHost, LPCTSTR pcszUser, LP
 
 
 
-void CTableCompareABC::Start( LPCTSTR pcszExportFilePath, bool bDisplayProgress )
+void CTableCompareABC::Start( LPCTSTR pcszExportFilePath, bool bDisplayProgress, bool bUseBulkInserts /*= true*/ )
 {
 	m_bDisplayProgress = bDisplayProgress;
+	m_bUseBulkInserts = bUseBulkInserts;
 
 	if( !m_mySource.IsConnected() || !m_myTarget.IsConnected() )
 	{
@@ -104,6 +106,13 @@ void CTableCompareABC::Start( LPCTSTR pcszExportFilePath, bool bDisplayProgress 
 	for( UINT u = 0; u < tables.size(); u++ )
 	{
 		const XMySQL::CConnection::Table &tbl = tables.at( u );
+#ifdef _DEBUG
+			if( tbl.strName != _T("programme") )
+			{
+// 				continue;
+			}
+#endif // _DEBUG
+
 		ProcessTable( tbl );
 
 		m_uTotalIdentical += GetIdenticalCount();
@@ -185,7 +194,7 @@ void CTableCompareABC::ProcessTable( const XMySQL::CConnection::Table &tbl )
 
 
 	const float fTook = (float)(time( NULL ) - tStart) / 60;
-	_tprintf( _T("\r  Done (took %.2f min). Found: %d same; %d different; %d new; %d delete         \n\n"), fTook, m_uRecordsIdentical, m_uRecordsDifferent, m_uRecordsInserted, m_uRecordsDeleted );
+	_tprintf( _T("\r\n  Done (took %.2f min). Found: %d same; %d different; %d new; %d delete         \n\n"), fTook, m_uRecordsIdentical, m_uRecordsDifferent, m_uRecordsInserted, m_uRecordsDeleted );
 }
 
 
@@ -200,4 +209,19 @@ void CTableCompareABC::WriteOutStatements( const std::vector< std::string > &arr
 			(void)fwrite( str.c_str(), sizeof( char ), str.size(), m_pFile );
 		}
 	}
+}
+
+
+bool CTableCompareABC::FieldIsQuoted( UINT uFieldType )
+{
+	if(
+		   uFieldType == MYSQL_TYPE_STRING || uFieldType == MYSQL_TYPE_VAR_STRING || uFieldType == MYSQL_TYPE_VARCHAR || uFieldType == MYSQL_TYPE_GEOMETRY 
+		|| uFieldType == MYSQL_TYPE_TINY_BLOB || uFieldType == MYSQL_TYPE_MEDIUM_BLOB || uFieldType == MYSQL_TYPE_LONG_BLOB || uFieldType == MYSQL_TYPE_BLOB 
+		|| uFieldType == MYSQL_TYPE_TIMESTAMP || uFieldType == MYSQL_TYPE_DATE || uFieldType == MYSQL_TYPE_TIME || uFieldType == MYSQL_TYPE_DATETIME || uFieldType == MYSQL_TYPE_NEWDATE
+		)
+	{
+		return true;
+	}
+
+	return false;
 }
